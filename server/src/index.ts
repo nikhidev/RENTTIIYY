@@ -7,6 +7,9 @@ import morgon from 'morgan';
 import { authMiddleware } from './middleware/authmiddleware';
 import tenantRoutes from './routes/tenantRoutes';
 import managerRoutes from './routes/ManagerRoutes';
+import propertyRoutes from './routes/propertiesRoutes'
+import leaseRoutes from "./routes/leaseRoutes"
+import applicationRoutes from "./routes/applicationRoutes"
 
 
 //Configurations
@@ -31,6 +34,11 @@ app.use("/tenants",authMiddleware(["tenant"]),tenantRoutes);
 
 app.use("/managers",authMiddleware(["manager"]),managerRoutes);
 
+app.use("/properties",propertyRoutes)
+
+app.use("/leases",leaseRoutes)
+
+app.use("/applications",applicationRoutes)
 // server
 
 const port = process.env.PORT || 3002
