@@ -33,3 +33,18 @@ export const getLeasePayment = async(req: Request, res: Response):Promise<void> 
     }
 
 }
+export const getLeasesByProperty = async (req: Request, res: Response) => {
+  try {
+    const { propertyId } = req.params;
+    const leases = await prisma.lease.findMany({
+      where: { propertyId: Number(propertyId) },
+      include: {
+        tenant: true,  // <-- this is needed for tenant info
+      },
+    });
+    res.json(leases);
+  } catch (err: any) {
+    console.error("Error fetching leases by property:", err);
+    res.status(500).json({ error: err.message });
+  }
+};

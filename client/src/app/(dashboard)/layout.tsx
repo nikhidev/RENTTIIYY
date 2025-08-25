@@ -1,0 +1,55 @@
+"use client";
+import Navbar from "@/components/navbar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { NAVBAR_HEIGHT } from "@/lib/constants";
+import { useGetAuthUserQuery } from "@/state/api";
+// import { Sidebar } from "lucide-react";
+import Sidebar from "@/components/Appsidebar";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+  const { data: authUser, isLoading: authLoading } = useGetAuthUserQuery();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isLoading, setLoading] = useState(true);
+  useEffect(() => {
+    if (authUser) {
+      const userRole = authUser.userRole?.toLowerCase();
+      if (
+        (userRole === "manager" && pathname.startsWith("/tenants")) ||
+        (userRole === "tenant" && pathname.startsWith("/manager"))
+      ) {
+        router.push(
+          userRole === "manager"
+            ? "/managers/properties"
+            : "/tenants/favorites",
+          { scroll: false }
+        );
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [authUser, router, pathname]);
+
+  if (authLoading || isLoading) {
+    return <>Loading ....</>;
+  }
+  if (!authUser?.userRole) return null;
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-secreen w-full bg-primary-100">
+        <Navbar />
+        <div style={{ marginTop: `${NAVBAR_HEIGHT}` }}>
+          <main className="flex">
+            <Sidebar userType={authUser.userRole.toLowerCase()} />
+            <div className="flex -grow transition-all duration-300">
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+};
+export default DashboardLayout

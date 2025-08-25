@@ -70,6 +70,7 @@ export const getCurrentResidence = async (
 ): Promise<void> => {
   try {
     const { cognitoId } = req.params;
+
     const properties = await prisma.property.findMany({
       where: {
         tenants: { some: { cognitoId } },
@@ -78,31 +79,41 @@ export const getCurrentResidence = async (
         location: true,
       },
     });
-    const residenceswithFormattedLocation = await Promise.all(
+
+    const residencesWithFormattedLocation = await Promise.all(
       properties.map(async (property) => {
         const coordinates: { coordinates: string }[] =
-          await prisma.$queryRaw`SELECT_asText(coordinates) as coordinates from "Location" where id = ${property.location.id}`;
+          await prisma.$queryRaw`
+            SELECT ST_AsText(coordinates) as coordinates
+            FROM "Location"
+            WHERE id = ${property.location.id}
+          `;
 
         const geoJSON: any = wktToGeoJSON(coordinates[0]?.coordinates || "");
         const longitude = geoJSON.coordinates[0];
         const latitude = geoJSON.coordinates[1];
 
         return {
-          ...property.location,
-          coordinates: {
-            longitude,
-            latitude,
+          ...property,
+          location: {
+            ...property.location,
+            coordinates: {
+              longitude,
+              latitude,
+            },
           },
         };
       })
     );
-    res.json(residenceswithFormattedLocation);
+
+    res.json(residencesWithFormattedLocation);
   } catch (err: any) {
-    res
-      .status(500)
-      .json({ message: `Eroor retrieving manager propeties: ${err.message}` });
+    res.status(500).json({
+      message: `Error retrieving tenant residences: ${err.message}`,
+    });
   }
 };
+
 export const addFavoriteProperty = async (
   req: Request,
   res: Response

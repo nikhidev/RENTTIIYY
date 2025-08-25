@@ -1,9 +1,14 @@
-import Image from "next/image";
+import Navbar from "@/components/navbar";
+
+import Landing from "./(nondashboard)/landing/page";
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <h1>Helllo dear</h1>
+    <div className="h-full w-full">
+    <Navbar/>
+    <main className={`h-full flex w-full flex-col`}>
+      <Landing/>
+    </main>
     </div>
   );
 }

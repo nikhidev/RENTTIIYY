@@ -1,4 +1,4 @@
-import React, { use, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Amplify } from "aws-amplify";
 
 import {
@@ -10,9 +10,8 @@ import {
   View,
 } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
-import { Sign, sign } from "crypto";
-import { usePathname, useRouter } from "next/navigation";
 
+import { usePathname, useRouter } from "next/navigation";
 
 Amplify.configure({
   Auth: {
@@ -73,13 +72,13 @@ const components = {
             hasError={!!validationErrors?.["custom:role"]}
             isRequired
           >
-           <Radio value="tenant ">Tenant</Radio>
-            <Radio value="landlord">Landlord</Radio>
+            <Radio value="tenant">Tenant</Radio>
+            <Radio value="manager">Manager</Radio>
           </RadioGroupField>
         </>
       );
     },
-     Footer() {
+    Footer() {
       const { toSignIn } = useAuthenticator();
       return (
         <View className="text-center mt-4">
@@ -95,13 +94,13 @@ const components = {
         </View>
       );
     },
-  }
+  },
 };
 const formFields = {
   signIn: {
     username: {
-      placeholder: "Enter your email",
-      label: "Email",
+      placeholder: "Enter your username",
+      label: "Username",
       isrequired: true,
     },
     password: {
@@ -144,25 +143,27 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   const isAuthPage = pathname.match(/^\/(signin|signup)$/);
-  const isDashboardPage = pathname.startsWith("/manager") || pathname.startsWith("/tenants");
-
+  const isDashboardPage =
+    pathname.startsWith("/manager") || pathname.startsWith("/tenants");
 
   // redirect authenticated users away from auth pages
 
-  useEffect(() =>{
-    if(user && isAuthPage){
+  useEffect(() => {
+    if (user && isAuthPage) {
       router.push("/");
     }
-  },[user, isAuthPage, router]);
+  }, [user, isAuthPage, router]);
 
-  if(!isAuthPage && ! isDashboardPage){
+  if (!isAuthPage && !isDashboardPage) {
     return <>{children}</>;
   }
   return (
     <div className="h-full">
-      <Authenticator 
-      initialState={pathname.includes("signup") ? "signUp" : "signIn"}
-      components={components} formFields={formFields}>
+      <Authenticator
+        initialState={pathname.includes("signup") ? "signUp" : "signIn"}
+        components={components}
+        formFields={formFields}
+      >
         {() => <>{children}</>}
       </Authenticator>
     </div>

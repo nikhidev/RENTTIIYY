@@ -83,22 +83,12 @@ export const listApplications = async (
   }
 };
 
-export const createApplication = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const createApplication = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {
-      applicationDate,
-      status,
-      propertyId,
-      tenantCognitoId,
-      name,
-      email,
-      phoneNumber,
-      message,
-    } = req.body;
+    const { status, propertyId, tenantCognitoId, name, email, phoneNumber, message } = req.body;
+    console.log("Request body:", req.body);
 
+    // 1. Validate property
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
       select: { pricePerMonth: true, securityDeposit: true },
@@ -106,64 +96,59 @@ export const createApplication = async (
 
     if (!property) {
       res.status(404).json({ message: "Property not found" });
-      return;
+      return
     }
 
-    const newApplication = await prisma.$transaction(async (prisma) => {
-      // Create lease first
-      const lease = await prisma.lease.create({
-        data: {
-          startDate: new Date(), // Today
-          endDate: new Date(
-            new Date().setFullYear(new Date().getFullYear() + 1)
-          ), // 1 year from today
-          rent: property.pricePerMonth,
-          deposit: property.securityDeposit,
-          property: {
-            connect: { id: propertyId },
-          },
-          tenant: {
-            connect: { cognitoId: tenantCognitoId },
-          },
-        },
-      });
-
-      // Then create application with lease connection
-      const application = await prisma.application.create({
-        data: {
-          applicationDate: new Date(applicationDate),
-          status,
-          name,
-          email,
-          phoneNumber,
-          message,
-          property: {
-            connect: { id: propertyId },
-          },
-          tenant: {
-            connect: { cognitoId: tenantCognitoId },
-          },
-          lease: {
-            connect: { id: lease.id },
-          },
-        },
-        include: {
-          property: true,
-          tenant: true,
-          lease: true,
-        },
-      });
-
-      return application;
+    // 2. Validate tenant
+    const tenant = await prisma.tenant.findUnique({
+      where: { cognitoId: tenantCognitoId },
     });
 
-    res.status(201).json(newApplication);
+    if (!tenant) {
+      res.status(404).json({ message: "Tenant not found" });
+      return
+    }
+
+    // 3. Create lease first
+    const lease = await prisma.lease.create({
+      data: {
+        startDate: new Date(),
+        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // 1 year lease
+        rent: property.pricePerMonth,
+        deposit: property.securityDeposit,
+        property: { connect: { id: propertyId } },
+        tenant: { connect: { cognitoId: tenantCognitoId } },
+      },
+    });
+
+    // 4. Create application linked to lease
+    const application = await prisma.application.create({
+      data: {
+        applicationDate: new Date(), // backend owns the date
+        status,
+        name,
+        email,
+        phoneNumber,
+        message,
+        property: { connect: { id: propertyId } },
+        tenant: { connect: { cognitoId: tenantCognitoId } },
+        lease: { connect: { id: lease.id } },
+      },
+      include: {
+        property: true,
+        tenant: true,
+        lease: true,
+      },
+    });
+
+    // 5. Return response
+    res.status(201).json(application);
   } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: `Error creating application: ${error.message}` });
+    console.error("CREATE APPLICATION ERROR:", error);
+    res.status(500).json({ message: `Error creating application: ${error.message}` });
   }
 };
+
 
 export const updateApplicationStatus = async (
   req: Request,
