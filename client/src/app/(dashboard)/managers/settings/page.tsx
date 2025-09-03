@@ -10,8 +10,10 @@ const ManagerSettings = () =>{
         return <div>Loading...</div>;
     }
   console.log("authUser",authUser)
+
+
   const initialData = {
-    name: authUser?.userInfo.name ,
+    name: authUser?.cognitoInfo.username ,
     email: authUser?.userInfo.email,
     phoneNumber: authUser?.userInfo.phoneNumber,
   };
