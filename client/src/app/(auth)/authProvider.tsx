@@ -101,12 +101,12 @@ const formFields = {
     username: {
       placeholder: "Enter your username",
       label: "Username",
-      isrequired: true,
+      isRequired: true,
     },
     password: {
       placeholder: "Enter your password",
       label: "Password",
-      isrequired: true,
+      isRequired: true,
     },
   },
   signUp: {
@@ -114,25 +114,25 @@ const formFields = {
       order: 1,
       placeholder: "Choose a username",
       label: "Username",
-      isrequired: true,
+      isRequired: true,
     },
     email: {
       order: 2,
       placeholder: "Enter your email",
       label: "Email",
-      isrequired: true,
+      isRequired: true,
     },
     password: {
       order: 3,
       placeholder: "Choose a password",
       label: "Password",
-      isrequired: true,
+      isRequired: true,
     },
     confirm_password: {
       order: 4,
       placeholder: "Confirm your password",
       label: "Confirm Password",
-      isrequired: true,
+      isRequired: true,
     },
   },
 };
