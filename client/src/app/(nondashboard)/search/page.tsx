@@ -3,7 +3,7 @@
 import { NAVBAR_HEIGHT } from "@/lib/constants";
 import { useAppDispatch, useAppSelector } from "@/state/redux";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import FiltersBar from "./FiltersBar"
 import FiltersFull from "./FiltersFull";
 import { cleanParams } from "@/lib/utils";
@@ -11,7 +11,8 @@ import { setFilters } from "@/state";
 import Map from "./Map"
 import Listings from "./Listings"
 
-const SearchPage = () => {
+// Separate component that uses useSearchParams
+const SearchPageContent = () => {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const isFiltersFullOpen = useAppSelector(
@@ -62,6 +63,19 @@ const SearchPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Main component with Suspense boundary
+const SearchPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="text-lg">Loading search...</div>
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   );
 };
 
