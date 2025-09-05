@@ -27,7 +27,7 @@ const Navbar = () => {
   const pathname = usePathname();
 
   const isDashboardPage =
-    pathname.includes("/manager") || pathname.includes("/tenants");
+    pathname.includes("/managers") || pathname.includes("/tenants");
 
   const handleSignOut = async () => {
     await signOut();
@@ -121,7 +121,7 @@ const Navbar = () => {
                     onClick={() =>
                       router.push(
                         authUser.userRole?.toLowerCase() === "manager"
-                          ? "/manager/properties"
+                          ? "/managers/properties"
                           : "/tenants/favorites",
                         { scroll: false }
                       )

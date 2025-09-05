@@ -17,7 +17,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       const userRole = authUser.userRole?.toLowerCase();
       if (
         (userRole === "manager" && pathname.startsWith("/tenants")) ||
-        (userRole === "tenant" && pathname.startsWith("/manager"))
+        (userRole === "tenant" && pathname.startsWith("/managers"))
       ) {
         router.push(
           userRole === "manager"
