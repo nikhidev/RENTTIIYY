@@ -1,79 +1,50 @@
-import { cleanParams, createNewUserInDatabase, withToast } from "@/lib/utils";
-import {
-  Application,
-  Lease,
-  Manager,
-  Payment,
-  Property,
-  Tenant,
-} from "@/types/prismaTypes";
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
-import { FiltersState } from ".";
+getAuthUser: build.query<User, void>({
+  queryFn: async (_, _queryApi, _extraOptions, fetchWithBQ) => {
+    try {
+      const session = await fetchAuthSession();
+      const { idToken } = session.tokens ?? {};
+      if (!idToken) {
+        return { error: { status: 401, data: "No ID token found" } };
+      }
 
-export const api = createApi({
-  baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
-   prepareHeaders: async (headers) => {
-  const session = await fetchAuthSession();
-  const { idToken } = session.tokens ?? {};
-  if (idToken) {
-    headers.set("Authorization", `Bearer ${idToken}`);
-  }
-  return headers;
-},
+      const user = await getCurrentUser();
+      const userRole = idToken.payload["custom:role"] as string;
+      const userId = idToken.payload["sub"]; // ✅ always reliable
 
-  }),
-  reducerPath: "api",
-  tagTypes: [
-    "Tenants",
-    "Managers",
-    "Properties",
-    "PropertiesDetails",
-    "Leases",
-    "Payments",
-    "Applications",
-  ],
-  endpoints: (build) => ({
-    getAuthUser: build.query<User, void>({
-      queryFn: async (_, _queryApi, _extraOptions, fetchWithBQ) => {
-        try {
-          const session = await fetchAuthSession();
-          const { idToken } = session.tokens ?? {};
-          const user = await getCurrentUser();
-          const userRole = idToken?.payload["custom:role"] as string;
+      console.log("Amplify user:", user);
+      console.log("Token sub:", userId, "Role:", userRole);
 
-          const endpoint =
-            userRole?.toLowerCase() === "manager"
-              ? `/managers/${user.userId}`
-              : `/tenants/${user.userId}`;
+      const endpoint =
+        userRole?.toLowerCase() === "manager"
+          ? `/managers/${userId}`
+          : `/tenants/${userId}`;
 
-          let userDetailsResponse = await fetchWithBQ(endpoint);
-          if (
-            userDetailsResponse.error &&
-            userDetailsResponse.error.status === 404
-          ) {
-            userDetailsResponse = await createNewUserInDatabase(
-              user,
-              idToken,
-              userRole,
-              fetchWithBQ
-            );
-          }
+      let userDetailsResponse = await fetchWithBQ(endpoint);
+      console.log("User details response:", userDetailsResponse);
 
-          return {
-            data: {
-              cognitoInfo: { ...user },
-              userInfo: userDetailsResponse.data as Tenant | Manager,
-              userRole,
-            },
-          };
-        } catch (error: any) {
-          return { error: error.message || "Could not fetch user data" };
-        }
-      },
-    }),
-    // tenant realated queries
+      if (userDetailsResponse.error && userDetailsResponse.error.status === 404) {
+        userDetailsResponse = await createNewUserInDatabase(
+          user,
+          idToken,
+          userRole,
+          fetchWithBQ
+        );
+        console.log("Created new user:", userDetailsResponse);
+      }
+
+      return {
+        data: {
+          cognitoInfo: { ...user },
+          userInfo: userDetailsResponse.data as Tenant | Manager,
+          userRole,
+        },
+      };
+    } catch (error: any) {
+      return { error: error.message || "Could not fetch user data" };
+    }
+  },
+}),
+ // realated queries
     updateTenant: build.mutation<
       Tenant,
       { cognitoId: string } & Partial<Tenant>
